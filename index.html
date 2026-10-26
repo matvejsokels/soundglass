@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoundGlass Music Player</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SoundCloud Widget API (Local with remote fallback) -->
+  <script src="soundcloud-api.js"></script>
+  <script>
+    if (typeof SC === 'undefined') {
+      document.write('<script src="https://w.soundcloud.com/player/api.js"><\/script>');
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen w-screen flex flex-col overflow-hidden select-none font-sans antialiased">
+
+  <!-- Background Ambient Glow & Blurred Cover Reflection -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+    <img id="bg-cover-blur" src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80" class="w-full h-full object-cover blur-3xl opacity-25 scale-125 transition-all duration-700" alt="Backdrop">
+    <div class="absolute inset-0 bg-slate-950/85"></div>
+  </div>
+
+  <!-- Custom Frameless Titlebar -->
+  <header class="drag-region h-11 w-full border-b border-white/5 flex items-center justify-between px-4 z-50 shrink-0 backdrop-blur-md bg-slate-900/60">
+    <div class="flex items-center space-x-3">
+      <div class="w-2.5 h-2.5 rounded-full bg-[#ff5500] shadow-[0_0_10px_rgba(255,85,0,0.9)]"></div>
+      <span class="text-xs font-semibold tracking-wider text-slate-200 uppercase">SoundGlass Player</span>
+      <span id="player-status-tag" class="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/20">SoundCloud Engine</span>
+    </div>
+
+    <!-- Title Bar Actions (no-drag) -->
+    <div class="no-drag-region flex items-center space-x-2">
+      <!-- Connect SoundCloud Account Button -->
+      <button id="sc-login-btn" class="flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#ff5500]/15 text-[#ff5500] hover:bg-[#ff5500]/25 border border-[#ff5500]/30 transition-all">
+        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+          <path d="M1.175 12.225c-.051 0-.094.045-.101.1l-.299 3.01c-.006.059.035.105.09.112l.307.039c.054 0 .094-.047.101-.105l.3-3.004c.007-.059-.034-.105-.09-.112l-.308-.04zm1.096-.45c-.067 0-.119.053-.127.126l-.372 3.754c-.007.067.042.126.109.134l.435.053c.067 0 .119-.053.127-.126l.372-3.754c.008-.073-.041-.126-.109-.133l-.435-.054zm1.18-.328c-.08 0-.142.062-.15.148l-.409 4.301c-.008.081.05.148.13.156l.519.055c.08 0 .142-.062.15-.149l.409-4.301c.008-.08-.05-.148-.13-.156l-.519-.054zm1.258-.293c-.092 0-.164.072-.174.17l-.442 4.774c-.008.093.058.17.15.178l.602.054c.092 0 .164-.071.174-.169l.442-4.774c.008-.093-.058-.17-.15-.178l-.602-.055zm1.312-.132c-.105 0-.188.083-.199.194l-.447 5.03c-.008.106.066.195.171.203l.685.054c.105 0 .188-.083.198-.195l.448-5.029c.008-.106-.066-.195-.171-.203l-.685-.054zm1.408-.07c-.118 0-.211.093-.223.218l-.427 5.234c-.008.118.074.218.192.227l.768.053c.118 0 .211-.093.223-.217l.427-5.235c.008-.118-.074-.217-.192-.226l-.768-.054zm1.479-.115c-.131 0-.234.104-.247.243l-.387 5.488c-.008.13.082.242.213.252l.851.054c.131 0 .234-.105.247-.243l.387-5.489c.008-.13-.082-.242-.213-.251l-.851-.054zm1.56-.201c-.144 0-.258.115-.272.269l-.339 5.823c-.008.143.091.267.234.277l.933.053c.144 0 .258-.114.272-.268l.339-5.824c.008-.143-.091-.267-.234-.276l-.933-.054zm1.637-.28c-.157 0-.281.126-.296.294l-.284 6.223c-.008.156.1.291.256.302l1.016.053c.157 0 .282-.126.297-.294l.284-6.223c.008-.156-.099-.292-.256-.302l-1.017-.053zm1.699-.187c-.171 0-.306.137-.321.321l-.228 6.556c-.008.169.108.316.277.327l1.099.053c.17 0 .305-.137.321-.321l.228-6.556c.008-.169-.108-.316-.277-.327l-1.099-.053zm3.76-3.411c-.328 0-.642.062-.934.175-.246.096-.467.234-.658.406-.062.057-.101.135-.106.221l-.158 9.544c0 .092.056.173.14.204.032.012.066.018.1.018l6.398-.002c2.404 0 4.36-1.956 4.36-4.36 0-2.316-1.815-4.211-4.095-4.35-.38-2.613-2.628-4.63-5.347-4.63-.448 0-.882.055-1.297.16-.145.037-.252.164-.256.314l-.067 2.115c0 .095.059.178.147.208.455.152.886.376 1.272.662.158.118.375.088.497-.067l.848-1.077c.451-.237.962-.372 1.503-.372 1.792 0 3.25 1.458 3.25 3.25 0 .185-.016.366-.046.543-.031.183.088.356.273.385 1.564.246 2.748 1.597 2.748 3.228 0 1.802-1.466 3.268-3.268 3.268l-4.566.002.105-6.38c.004-.265-.181-.497-.444-.543-1.054-.183-2.128.18-2.853.945-.145.153-.385.166-.546.029-.267-.227-.581-.397-.933-.493z"/>
+        </svg>
+        <span id="sc-login-text">Sign In to SoundCloud</span>
+      </button>
+
+      <div class="w-[1px] h-4 bg-white/10 mx-0.5"></div>
+
+      <!-- Window Actions -->
+      <button id="min-btn" title="Minimize" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M2 8a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H2.75A.75.75 0 012 8z"/>
+        </svg>
+      </button>
+      <button id="max-btn" title="Maximize" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3" fill="none"/>
+        </svg>
+      </button>
+      <button id="close-btn" title="Close" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-rose-600 transition-colors">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- URL Quick Input Bar & Account Refresh Button -->
+  <div class="px-6 pt-3.5 z-20 shrink-0">
+    <div class="glass-card rounded-xl p-2 flex items-center space-x-2 border border-white/10 shadow-lg">
+      <div class="pl-2 text-[#ff5500]">
+        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm1 17h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+        </svg>
+      </div>
+      <input 
+        id="url-input" 
+        type="text" 
+        placeholder="Paste SoundCloud playlist or song link..." 
+        class="flex-1 bg-transparent border-0 text-xs placeholder-slate-500 focus:outline-none text-slate-100 px-1"
+      />
+      
+      <!-- Account Refresh Button: Clears old playlists & re-imports all account playlists -->
+      <button 
+        id="refresh-active-playlist-btn" 
+        title="Delete previous playlists & import all playlists and songs from your SoundCloud account"
+        class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 hover:text-orange-300 text-xs transition-all border border-orange-500/30"
+      >
+        <svg id="refresh-icon" class="w-3.5 h-3.5 text-[#ff5500]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        <span class="font-medium">Refresh Account</span>
+      </button>
+
+      <button 
+        id="load-btn" 
+        class="bg-gradient-to-r from-[#ff5500] to-[#ff7733] hover:from-[#ff6a1a] hover:to-[#ff8844] text-white font-medium text-xs px-3.5 py-1.5 rounded-lg transition duration-200 shadow-md flex items-center space-x-1 shrink-0"
+      >
+        <span id="load-btn-text">Import Songs</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Primary Art-First Player Viewport -->
+  <main class="flex-1 flex flex-col items-center justify-between px-6 py-4 z-10 overflow-hidden">
+    
+    <!-- Massive Square Album Art -->
+    <div class="relative w-full max-w-[360px] aspect-square my-auto flex items-center justify-center">
+      <div class="relative w-full h-full rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.85)] border border-white/10 group">
+        <img id="main-album-art" src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80" alt="Album Cover" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        
+        <div id="art-source-pill" class="absolute top-4 left-4 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-black/60 backdrop-blur-md text-[#ff5500] border border-white/10">
+          SoundCloud
+        </div>
+
+        <div id="playlist-tag-pill" class="absolute bottom-4 left-4 right-4 px-3 py-1.5 rounded-xl text-[11px] font-medium bg-black/70 backdrop-blur-md text-slate-300 border border-white/10 truncate flex items-center justify-between">
+          <span class="truncate">Playlist: <span id="current-playlist-name" class="text-white font-semibold">My Playlist</span></span>
+          <span id="album-saved-indicator" class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0 ml-2">Saved Permanently</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metadata & Controls Hub -->
+    <div class="w-full max-w-xl flex flex-col space-y-3 shrink-0">
+      
+      <!-- Track Details & Actions -->
+      <div class="flex items-center justify-between">
+        <div class="min-w-0 pr-4">
+          <h1 id="track-title" class="text-xl md:text-2xl font-bold text-white truncate tracking-tight">SoundGlass Player</h1>
+          <p id="track-artist" class="text-sm text-slate-400 truncate mt-0.5">Ready to play</p>
+        </div>
+        
+        <!-- Toggle Playlists & Queue Drawer Buttons -->
+        <div class="flex items-center space-x-2 shrink-0">
+          <button id="playlists-btn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl glass-card text-xs text-slate-300 hover:text-white hover:border-orange-500/40 transition-all">
+            <svg class="w-4 h-4 text-[#ff5500]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+            <span id="playlists-pill-count">Playlists</span>
+          </button>
+
+          <button id="queue-toggle-btn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl glass-card text-xs text-slate-300 hover:text-white hover:border-orange-500/40 transition-all">
+            <svg class="w-4 h-4 text-[#ff5500]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+            </svg>
+            <span id="queue-pill-count">Queue (0)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Interactive Scrub / Timeline Bar -->
+      <div class="space-y-1">
+        <input id="seek-bar" type="range" min="0" max="1000" value="0" class="w-full" />
+        <div class="flex justify-between text-[11px] text-slate-400 font-mono">
+          <span id="current-time">0:00</span>
+          <span id="total-duration">0:00</span>
+        </div>
+      </div>
+
+      <!-- Main Unified Transport Controls -->
+      <div class="flex items-center justify-between pt-1">
+        <!-- Status indicator -->
+        <div class="w-28 text-left">
+          <span id="engine-status" class="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Ready</span>
+        </div>
+
+        <!-- Center Controls: Prev, Play, Next -->
+        <div class="flex items-center space-x-4">
+          <button id="prev-btn" title="Previous Track" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-95">
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+          </button>
+
+          <button id="play-btn" title="Play/Pause" class="w-14 h-14 rounded-full bg-gradient-to-tr from-[#ff5500] to-[#ff8844] text-white flex items-center justify-center shadow-[0_0_20px_rgba(255,85,0,0.5)] hover:scale-105 active:scale-95 transition-all">
+            <svg id="play-icon" class="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="pause-icon" class="w-6 h-6 fill-current hidden" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+
+          <button id="next-btn" title="Next Track" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-95">
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+          </button>
+        </div>
+
+        <!-- Volume Bar -->
+        <div class="flex items-center space-x-2 w-28 justify-end">
+          <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+          </svg>
+          <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.8" class="w-16" />
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Playlists Drawer (Left / Bottom slide-up) -->
+  <div id="playlists-drawer" class="fixed inset-x-0 bottom-0 max-h-80 glass-panel border-t border-white/10 transform translate-y-full transition-transform duration-300 z-40 flex flex-col">
+    <div class="flex items-center justify-between p-3.5 border-b border-white/5 bg-slate-900/60">
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-[#ff5500]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+        </svg>
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-200">Your Playlists</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button id="refresh-library-btn" class="px-2.5 py-1 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs hover:bg-orange-500/30 transition-all font-medium">
+          ↻ Sync Account
+        </button>
+        <button id="new-playlist-btn" class="px-2.5 py-1 rounded-lg bg-white/10 text-slate-300 text-xs hover:bg-white/20 transition-all font-medium">
+          + New Playlist
+        </button>
+        <button id="playlists-close-btn" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/5">Close</button>
+      </div>
+    </div>
+    <div id="playlists-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+      <!-- Playlists rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- Collapsible Current Queue Drawer with Track Search Bar -->
+  <div id="queue-drawer" class="fixed inset-x-0 bottom-0 max-h-96 glass-panel border-t border-white/10 transform translate-y-full transition-transform duration-300 z-40 flex flex-col">
+    <div class="p-3 border-b border-white/5 bg-slate-900/60 flex flex-col space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <svg class="w-4 h-4 text-[#ff5500]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+          </svg>
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-200">Current Queue</span>
+          <span id="queue-playlist-title" class="text-[11px] text-slate-400 truncate max-w-[200px]">(My Playlist)</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button id="clear-queue-btn" title="Remove all tracks from this playlist" class="text-xs text-slate-400 hover:text-rose-400 px-2 py-0.5 rounded bg-white/5 transition-colors">Clear</button>
+          <button id="queue-close-btn" class="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/5">Close</button>
+        </div>
+      </div>
+
+      <!-- Small Instant Search Bar to filter through songs -->
+      <div class="relative flex items-center">
+        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input 
+          id="track-search-input" 
+          type="text" 
+          placeholder="Search through songs by title or artist..." 
+          class="w-full bg-slate-950/80 border border-white/10 rounded-lg pl-8 pr-7 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/50"
+        />
+        <button id="clear-search-btn" class="absolute right-2 text-slate-500 hover:text-slate-300 hidden text-xs">✕</button>
+      </div>
+    </div>
+    <div id="queue-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+      <!-- Tracks dynamically rendered -->
+    </div>
+  </div>
+
+  <!-- New Playlist Prompt Modal -->
+  <div id="playlist-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="glass-panel w-full max-w-sm p-5 rounded-2xl border border-white/10 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-white">Create New Playlist</h3>
+        <button id="playlist-modal-close" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <input 
+        id="new-playlist-input" 
+        type="text" 
+        placeholder="e.g. Favorites, Gym Phonk, Synthwave..." 
+        class="w-full bg-slate-900/90 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+      />
+      <div class="flex justify-end space-x-2">
+        <button id="cancel-playlist-btn" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 text-xs">Cancel</button>
+        <button id="create-playlist-btn" class="px-4 py-1.5 rounded-lg bg-[#ff5500] hover:bg-[#ff6a1a] text-white font-medium text-xs">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Sandbox for SoundCloud Audio Stream with Full Encrypted-Media Permissions -->
+  <div class="hidden-embed-container">
+    <iframe 
+      id="soundcloud-hidden-iframe" 
+      allow="autoplay *; encrypted-media *; fullscreen *" 
+      src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F293&auto_play=false&show_user=false"
+    ></iframe>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

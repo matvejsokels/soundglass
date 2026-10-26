@@ -1,0 +1,37 @@
+{
+  "name": "soundglass-music-player",
+  "version": "1.0.0",
+  "description": "Fast, beautiful Windows desktop music player powered by SoundCloud with full playlist extraction, persistent multi-playlist management, and glassmorphic UI.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable"
+  },
+  "keywords": [
+    "music-player",
+    "electron",
+    "soundcloud",
+    "playlist-extractor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.soundglass.player",
+    "productName": "SoundGlassPlayer",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "portable"
+      ]
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.exe"
+    }
+  }
+}
